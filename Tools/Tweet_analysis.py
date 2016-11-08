@@ -1,4 +1,4 @@
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import string, re
 import nltk
@@ -46,7 +46,12 @@ def preprocess(tweet):
         tweet=''
     return tweet
 
+#text processing
 data['processed_text'] = data.text.apply(preprocess)
+
+#remove duplicate tweets
+data = data.drop_duplicates(subset='processed_text', keep='last')
+
 categories = data.sentiment.unique()
 categories  = categories.tolist()
 
