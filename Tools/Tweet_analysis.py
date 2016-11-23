@@ -110,11 +110,28 @@ X_train_bigramcounts = bigram_vect.fit_transform(x_train)
 #First attempt at classification
 clf = MultinomialNB().fit(X_train_counts, y_train)
 clf_bigram = MultinomialNB().fit(X_train_bigramcounts, y_train)
-
+clf_tfidf = MultinomialNB().fit(X_train_tfidf, y_train)
 #check with test set
 X_test_counts = count_vect.transform(x_test)
 predicted = clf.predict(X_test_counts)
-np.mean(predicted == y_test)
+print("Means for counts: " + str(np.mean(predicted == y_test)))
+
 X_test_bigramcounts = bigram_vect.transform(x_test)
 predicted2 = clf_bigram.predict(X_test_bigramcounts)
-np.mean(predicted2 == y_test) 
+print("Means for bigrams: " + str(np.mean(predicted2 == y_test)))
+
+
+X_test_tfidf = count_vect.transform(x_test)
+predicted_tfidf = clf_tfidf.predict(X_test_tfidf)
+print("Means for tfidf: " + str(np.mean(predicted_tfidf == y_test)))
+
+classifiers = [clf, clf_bigram, clf_tfidf]
+
+
+predicted_train_counts = clf.predict(X_train_counts)
+predicted_train_bigram = clf_bigram.predict(X_train_bigramcounts)
+predicted_train_tfidf = clf_tfidf.predict(X_train_tfidf)
+
+print("Means: " + str(np.mean(predicted_train_counts == y_train)))
+print("Means: " + str(np.mean(predicted_train_bigram == y_train)))
+print("Means: " + str(np.mean(predicted_train_tfidf == y_train)))
