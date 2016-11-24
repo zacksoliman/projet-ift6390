@@ -2,21 +2,12 @@ import pandas as pd
 import numpy as np
 import string, re
 import nltk
-from sklearn.cross_validation import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer,HashingVectorizer, CountVectorizer
-from sklearn import naive_bayes,metrics, linear_model,svm, grid_search
 import time,random
 import operator
 #from tabulate import tabulate
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
-from sklearn.linear_model import RidgeClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
 from nltk.stem.snowball import SnowballStemmer
 
+import os.path
 
 stop_list = nltk.corpus.stopwords.words('english')
 lemmatizer = nltk.stem.WordNetLemmatizer()
@@ -30,13 +21,7 @@ BushWords = ['jebbush','bush']
 hillary_re = re.compile('|'.join(map(re.escape, HillaryWords)))
 donald_re = re.compile('|'.join(map(re.escape, DonaldWords)))
 
-
-data = pd.read_csv("../data/Sentiment.csv")
 classifier =[]
-
-def get_data(path):
-
-    return pd.read_csv(path)
 
 def preprocess(tweet):
 
@@ -73,3 +58,20 @@ def preprocess(tweet):
     else:
         tweet=''
     return tweet
+
+def clean_data(data):
+
+    #text processing
+    data['processed_text'] = data.text.apply(preprocess)
+    #remove duplicate tweets
+    data = data.drop_duplicates(subset='processed_text', keep='last')
+
+    return data
+
+def get_clean_data(dataset="Sentiment"):
+
+    basepath = os.path.dirname(__file__)
+    filepath = os.path.abspath(os.path.join(basepath, "..", "data", dataset + ".csv"))
+    data = pd.read_csv(filepath)
+
+    return clean_data(data)
