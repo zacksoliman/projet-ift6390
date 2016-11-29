@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from Tools.data_processing import get_clean_data
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.optimizers import SGD
