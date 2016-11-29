@@ -18,6 +18,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import mutual_info_classif
 from nltk.stem.snowball import SnowballStemmer
 
 stop_list = nltk.corpus.stopwords.words('english')
@@ -92,6 +93,7 @@ y= y_categories.codes #transform sentiment labels into 0,1,2
 # Déterminer au hasard des indices pour les exemples d'entrainement et de test
 n_train = (data.shape[0]*2) // 3
 inds = [i for i in range(data.shape[0])]
+random.seed(2)
 random.shuffle(inds)
 train_inds = inds[:n_train]
 test_inds = inds[n_train:]
@@ -114,6 +116,7 @@ X_train_bigramcounts = bigram_vect.fit_transform(x_train)
 clf = MultinomialNB().fit(X_train_counts, y_train)
 clf_bigram = MultinomialNB().fit(X_train_bigramcounts, y_train)
 clf_tfidf = MultinomialNB().fit(X_train_tfidf, y_train)
+clf_binomial = BernoulliNB().fit(X_train_counts, y_train)
 
 #check error with test set
 X_test_counts = count_vect.transform(x_test)
@@ -147,7 +150,7 @@ def evaluate(X_train, X_test, y_train, y_test, classif):
 #Feature selection
 N_FEAT = X_train_counts.shape[1]
 nFeatures = np.array([N_FEAT, 5000, 2000, 1000, 10])
-scoreFuncs = [chi2, f_classif]
+scoreFuncs = [chi2, f_classif, mutual_info_classif]
 ResultTable = np.zeros((len(scoreFuncs),len(nFeatures)))
 for i in range(0, len(scoreFuncs)):
     for j in range(0, len(nFeatures)):
@@ -156,3 +159,5 @@ for i in range(0, len(scoreFuncs)):
         Xtrunc_train = featureselector.fit_transform(X_train_counts, y_train)
         Xtrunc_test = featureselector.transform(X_test_counts)
         ResultTable[i, j] = evaluate(Xtrunc_train, Xtrunc_test, y_train, y_test, MultinomialNB())
+feat_ind = featureselector.get_support(indices = True)
+#count_vect.get_feature_names()[feat_ind]

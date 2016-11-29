@@ -15,6 +15,10 @@ from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import mutual_info_classif
 from nltk.stem.snowball import SnowballStemmer
 
 stop_list = nltk.corpus.stopwords.words('english')
@@ -89,6 +93,7 @@ y= y_categories.codes #transform sentiment labels into 0,1,2
 # Déterminer au hasard des indices pour les exemples d'entrainement et de test
 n_train = (data.shape[0]*2) // 3
 inds = [i for i in range(data.shape[0])]
+random.seed(2)
 random.shuffle(inds)
 train_inds = inds[:n_train]
 test_inds = inds[n_train:]
@@ -101,17 +106,19 @@ y_test = y[test_inds]
 #1-grams
 count_vect = CountVectorizer() #counts occurences of each word
 X_train_counts = count_vect.fit_transform(x_train)
-tfidf_transformer = TfidfVectorizer() #applies transformation to account for frequency
+tfidf_transformer = TfidfVectorizer() #applies transformation to account for frequency in dictionary
 X_train_tfidf = tfidf_transformer.fit_transform(x_train)
+X_train_binary = tfidf_transformer.fit_transform(x_train, binary = False, use_idf = False)
 #including 2-grams
 bigram_vect = CountVectorizer(ngram_range=(1, 2),token_pattern=r'\b\w+\b', min_df=1)
 X_train_bigramcounts = bigram_vect.fit_transform(x_train)
 
-#First attempt at classification
+#First attempt at classification: fit 3 classifiers
 clf = MultinomialNB().fit(X_train_counts, y_train)
 clf_bigram = MultinomialNB().fit(X_train_bigramcounts, y_train)
 clf_tfidf = MultinomialNB().fit(X_train_tfidf, y_train)
-#check with test set
+clf_binomial = BernoulliNB().fit(X_train_binary, y_train)
+#check error with test set
 X_test_counts = count_vect.transform(x_test)
 predicted = clf.predict(X_test_counts)
 print("Means for counts: " + str(np.mean(predicted == y_test)))
@@ -120,14 +127,13 @@ X_test_bigramcounts = bigram_vect.transform(x_test)
 predicted2 = clf_bigram.predict(X_test_bigramcounts)
 print("Means for bigrams: " + str(np.mean(predicted2 == y_test)))
 
-
 X_test_tfidf = count_vect.transform(x_test)
 predicted_tfidf = clf_tfidf.predict(X_test_tfidf)
 print("Means for tfidf: " + str(np.mean(predicted_tfidf == y_test)))
 
-classifiers = [clf, clf_bigram, clf_tfidf]
+X_test_binary = 
 
-
+#check error with train set
 predicted_train_counts = clf.predict(X_train_counts)
 predicted_train_bigram = clf_bigram.predict(X_train_bigramcounts)
 predicted_train_tfidf = clf_tfidf.predict(X_train_tfidf)
@@ -135,3 +141,25 @@ predicted_train_tfidf = clf_tfidf.predict(X_train_tfidf)
 print("Means: " + str(np.mean(predicted_train_counts == y_train)))
 print("Means: " + str(np.mean(predicted_train_bigram == y_train)))
 print("Means: " + str(np.mean(predicted_train_tfidf == y_train)))
+
+#evaluate function
+def evaluate(X_train, X_test, y_train, y_test, classif):
+    classif.fit(X_train, y_train)
+    ypred = classif.predict(X_test)
+    score = np.mean(ypred == y_test)
+    return score
+
+#Feature selection
+N_FEAT = X_train_counts.shape[1]
+nFeatures = np.array([N_FEAT, 5000, 2000, 1000, 10])
+scoreFuncs = [chi2, f_classif,mutual_info_classif]
+ResultTable = np.zeros((len(scoreFuncs),len(nFeatures)))
+for i in range(0, len(scoreFuncs)):
+    for j in range(0, len(nFeatures)):
+    #if nFeatures[j] != N_FEAT:
+        featureselector = SelectKBest(score_func = scoreFuncs[i], k = nFeatures[j])
+        Xtrunc_train = featureselector.fit_transform(X_train_counts, y_train)
+        Xtrunc_test = featureselector.transform(X_test_counts)
+        ResultTable[i, j] = evaluate(Xtrunc_train, Xtrunc_test, y_train, y_test, MultinomialNB())
+feat_ind = featureselector.get_support(indices = True)
+#count_vect.get_feature_names()[feat_ind]
