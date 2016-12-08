@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from Tools.data_processing import get_clean_data
+from tweet_analysis.Tools.data_processing import get_clean_data
 from keras.utils.np_utils import to_categorical
 import numpy as np
 from sklearn.feature_extraction.text import  CountVectorizer
+import time
 
+##%Load and set the data
 #Importation des data
 #Sentiment  election, Tweets  avion
-namedata='Sentiment'
+namedata='Tweets'
+
 data = get_clean_data(namedata)
 
 
@@ -28,8 +31,7 @@ y_categories = pd.Categorical.from_array(y_labelname)
 y= y_categories.codes  #transform sentiment labels into 0,1,2
 
 
-
-# Determiner au hasard des indices pour les exemples d'entrainement et de test
+#Determiner au hasard des indices pour les exemples d'entrainement et de test
 print 'creation des data train test'
 n_train = (data.shape[0]*2) // 3
 inds = [i for i in range(data.shape[0])]
@@ -37,12 +39,12 @@ np.random.shuffle(inds)
 train_inds = inds[:n_train]
 test_inds = inds[n_train:]
 
+
 # garder les bonnes lignes
 x_train = x[train_inds]
 x_test = x[test_inds]
 y_train = y[train_inds]
 y_test = y[test_inds]
-
 
 
 #bag of words representation: vectorizing
@@ -52,12 +54,11 @@ print '1-grams'
 count_vect = CountVectorizer()
 X_train_counts = count_vect.fit_transform(x_train).toarray()
 X_test_counts = count_vect.transform(x_test).toarray()
-#X_train_counts=X_train_counts.toarray()
 #tfidf_transformer = TfidfVectorizer() #applies transformation to account for frequency
 #X_train_tfidf = tfidf_transformer.fit_transform(x_train)
 #X_test_tfidf= tfidf_transformer.fit_transform(x_test)
 
-#including 2-grams
+#2-grams
 #bigram_vect = CountVectorizer(ngram_range=(1, 2),token_pattern=r'\b\w+\b', min_df=1)
 #X_train_bigramcounts = bigram_vect.fit_transform(x_train)
 
@@ -70,23 +71,98 @@ x_test_keras=X_test_counts
 y_train_keras = to_categorical(y_train,3)
 y_test_keras = to_categorical(y_test,3)
 
+
+
 #creation du reseau de neurone avec keras
 #importation du reseau de neurone nn12
-from Tools.KerasNN import NN1
-model=NN1(np.shape(X_train_counts)[1])
-#model=NN4()
+nepoche = 50
+optimizerlist=['sgd','rmsprop','adagrad','adadelta','adam','adamax','nadam']  #,'tfoptimizer'] #tester ac leur param par def
 
-#Entrainement du reseau de neurones
-logs = model.fit(x_train_keras, y_train_keras, nb_epoch=8,
-                 validation_data=(x_test_keras, y_test_keras))
+#for i,opt in enumerate(optimizerlist):
+#    from Tools.KerasNN import NN1
+#    model=NN1(np.shape(x_train_keras)[1],opt)
+#    #Entrainement du reseau de neurones
+#    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
+#
+#    #enregistrement des resultats
+#
+#    file = open("Tweets_NN1.txt", "a")
+#    print >> file, 'NN1'
+#    print >> file, opt
+#    print >> file, 'train'
+#    print >> file, logs.history['acc'][-1]
+#    print >> file, 'valid'
+#    print >> file, logs.history['val_acc'][-1]
+#    print >> file, 'historique'
+#    print >> file, logs.history
+#    print >> file, ''
+#    file.close()
 
-#essai plot keras
-#from keras.utils.visualize_util import plot
-#plot(model, to_file='model.png')
-#from IPython.display import SVG
-#from keras.utils.visualize_util import model_to_dot
 
-#SVG(model_to_dot(model).create(prog='dot', format='svg'))
+
+for i,opt in enumerate(optimizerlist):
+
+    from tweet_analysis.Tools.KerasNN import NN2
+    model=NN2(np.shape(x_train_keras)[1],opt,'tanh',10)  # nn2,3 : et hidden layer, tanh ou relu.
+    #Entrainement du reseau de neurones
+
+    start = time.time()
+    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
+
+    end = time.time()
+    duree=end-start
+    print duree
+
+    #enregistrement des resultats
+
+    file = open("Tweets_hid_10_vs_midinput.txt", "a")
+    print >> file, 'NN2'
+    print >> file, opt
+    print >> file, 'tanh'
+    print >> file, '10'
+    print >> file, 'train'
+    print >> file, logs.history['acc'][-1]
+    print >> file, 'valid'
+    print >> file, logs.history['val_acc'][-1]
+    print >> file, 'historique'
+    print >> file, logs.history
+    print >> file, duree
+    print >> file, ''
+    file.close()
+
+
+
+for i,opt in enumerate(optimizerlist):
+
+    from tweet_analysis.Tools.KerasNN import NN2
+    model=NN2(np.shape(x_train_keras)[1],opt,'tanh',np.shape(x_train_keras)[1]//2)  # nn2,3 : et hidden layer, tanh ou relu.
+    #Entrainement du reseau de neurones
+
+    start = time.time()
+    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
+
+    end = time.time()
+    duree=end-start
+    print duree
+
+    #affichage et enregistrement des resultats
+
+    file = open("Tweets_hid_10_vs_midinput.txt", "a")
+    print >> file, 'NN2'
+    print >> file, opt
+    print >> file, 'tanh'
+    print >> file, np.shape(x_train_keras)[1]//2
+    print >> file, 'train'
+    print >> file, logs.history['acc'][-1]
+    print >> file, 'valid'
+    print >> file, logs.history['val_acc'][-1]
+    print >> file, 'historique'
+    print >> file, logs.history
+    print >> file, duree
+    print >> file, ''
+    file.close()
+
+
 
 # graphique classe correct et fonction objective
 #plt.plot(logs.history['acc'], label='train')
@@ -98,3 +174,4 @@ logs = model.fit(x_train_keras, y_train_keras, nb_epoch=8,
 #plt.plot(logs.history['val_loss'], label='valid')
 #plt.title('Fonction objectif sur l\'ensemble d\'entrainement')
 #plt.show()
+
