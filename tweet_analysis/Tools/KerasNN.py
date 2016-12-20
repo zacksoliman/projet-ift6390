@@ -4,6 +4,9 @@ from keras.layers import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
 import numpy as np
 
+
+
+
 #softmax, pas de couche cacher
 def NN1(shapeinput, optim):
     model = Sequential()

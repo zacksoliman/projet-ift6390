@@ -5,11 +5,13 @@ from keras.utils.np_utils import to_categorical
 import numpy as np
 from sklearn.feature_extraction.text import  CountVectorizer
 import time
+from keras.callbacks import EarlyStopping
+
 
 ##%Load and set the data
 #Importation des data
 #Sentiment  election, Tweets  avion
-namedata='Tweets'
+namedata='Sentiment'
 
 data = get_clean_data(namedata)
 
@@ -71,34 +73,35 @@ x_test_keras=X_test_counts
 y_train_keras = to_categorical(y_train,3)
 y_test_keras = to_categorical(y_test,3)
 
+# Arrete le code lorsque le model n'est plus capable d'optimiser plus.
+early_stopping = EarlyStopping(monitor='val_loss', patience=2)
 
 
 #creation du reseau de neurone avec keras
 #importation du reseau de neurone nn12
-nepoche = 50
-optimizerlist=['sgd','rmsprop','adagrad','adadelta','adam','adamax','nadam']  #,'tfoptimizer'] #tester ac leur param par def
+nepoche = 100
+optimizerlist=['sgd']#,'rmsprop','adagrad','adadelta','adam','adamax','nadam']  #,'tfoptimizer'] #tester ac leur param par def
+'''
+for i,opt in enumerate(optimizerlist):
+    from Tools.KerasNN import NN1
+    model=NN1(np.shape(x_train_keras)[1],opt)
+    #Entrainement du reseau de neurones
+    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
 
-#for i,opt in enumerate(optimizerlist):
-#    from Tools.KerasNN import NN1
-#    model=NN1(np.shape(x_train_keras)[1],opt)
-#    #Entrainement du reseau de neurones
-#    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
-#
-#    #enregistrement des resultats
-#
-#    file = open("Tweets_NN1.txt", "a")
-#    print >> file, 'NN1'
-#    print >> file, opt
-#    print >> file, 'train'
-#    print >> file, logs.history['acc'][-1]
-#    print >> file, 'valid'
-#    print >> file, logs.history['val_acc'][-1]
-#    print >> file, 'historique'
-#    print >> file, logs.history
-#    print >> file, ''
-#    file.close()
+    #enregistrement des resultats
 
-
+    file = open("Tweets_NN1.txt", "a")
+    print >> file, 'NN1'
+    print >> file, opt
+    print >> file, 'train'
+    print >> file, logs.history['acc'][-1]
+    print >> file, 'valid'
+    print >> file, logs.history['val_acc'][-1]
+    print >> file, 'historique'
+    print >> file, logs.history
+    print >> file, ''
+    file.close()
+'''
 
 for i,opt in enumerate(optimizerlist):
 
@@ -107,14 +110,14 @@ for i,opt in enumerate(optimizerlist):
     #Entrainement du reseau de neurones
 
     start = time.time()
-    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
+    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras),callbacks=[early_stopping])
 
     end = time.time()
     duree=end-start
     print duree
 
     #enregistrement des resultats
-
+'''
     file = open("Tweets_hid_10_vs_midinput.txt", "a")
     print >> file, 'NN2'
     print >> file, opt
@@ -129,9 +132,9 @@ for i,opt in enumerate(optimizerlist):
     print >> file, duree
     print >> file, ''
     file.close()
+'''
 
-
-
+'''
 for i,opt in enumerate(optimizerlist):
 
     from tweet_analysis.Tools.KerasNN import NN2
@@ -161,17 +164,16 @@ for i,opt in enumerate(optimizerlist):
     print >> file, duree
     print >> file, ''
     file.close()
-
-
+'''
 
 # graphique classe correct et fonction objective
-#plt.plot(logs.history['acc'], label='train')
-#plt.plot(logs.history['val_acc'], label='valid')
-#plt.legend()
-#plt.title('Pourcentage de classes correctes')
-#plt.show()
-#plt.plot(logs.history['loss'], label='train')
-#plt.plot(logs.history['val_loss'], label='valid')
-#plt.title('Fonction objectif sur l\'ensemble d\'entrainement')
-#plt.show()
+plt.plot(logs.history['acc'], label='train')
+plt.plot(logs.history['val_acc'], label='valid')
+plt.legend()
+plt.title('Pourcentage de classes correctes')
+plt.show()
+plt.plot(logs.history['loss'], label='train')
+plt.plot(logs.history['val_loss'], label='valid')
+plt.title('Fonction objectif sur l\'ensemble d\'entrainement')
+plt.show()
 
