@@ -11,10 +11,10 @@ from keras.callbacks import EarlyStopping
 ##%Load and set the data
 #Importation des data
 #Sentiment  election, Tweets  avion
-namedata='Sentiment'
+namedata='Tweets'
 
-data = get_clean_data(namedata)
-
+#data = get_clean_data(namedata)
+data=get_clean_data(namedata)
 
 #set target y and predictor x
 print 'set target and predictor'
@@ -28,6 +28,9 @@ else:
 categories  = categories.tolist()
 
 x = data.processed_text.values
+x_exist_emot=data.exist_emot.values
+x_sent_emot=data.sent_emot.values
+
 y_categories = pd.Categorical.from_array(y_labelname)
 
 y= y_categories.codes  #transform sentiment labels into 0,1,2
@@ -47,7 +50,10 @@ x_train = x[train_inds]
 x_test = x[test_inds]
 y_train = y[train_inds]
 y_test = y[test_inds]
-
+x_train_exist_emot=x_exist_emot[train_inds]
+x_test_exist_emot=x_exist_emot[test_inds]
+x_train_sent_emot=x_sent_emot[train_inds]
+x_test_sent_emot=x_sent_emot[test_inds]
 
 #bag of words representation: vectorizing
 #1-grams
@@ -67,11 +73,12 @@ X_test_counts = count_vect.transform(x_test).toarray()
 
 
 #%% Keras
-#notre exemple de test modifier au besoin de keras
+#notre exemple de test modifier au besoin de keras, sans considerer emoticone
 x_train_keras= X_train_counts
 x_test_keras=X_test_counts
 y_train_keras = to_categorical(y_train,3)
 y_test_keras = to_categorical(y_test,3)
+
 
 # Arrete le code lorsque le model n'est plus capable d'optimiser plus.
 early_stopping = EarlyStopping(monitor='val_loss', patience=2)
@@ -117,8 +124,8 @@ for i,opt in enumerate(optimizerlist):
     print duree
 
     #enregistrement des resultats
-'''
-    file = open("Tweets_hid_10_vs_midinput.txt", "a")
+
+    file = open("Tweets_without_emot.txt", "a")
     print >> file, 'NN2'
     print >> file, opt
     print >> file, 'tanh'
@@ -132,29 +139,35 @@ for i,opt in enumerate(optimizerlist):
     print >> file, duree
     print >> file, ''
     file.close()
-'''
 
-'''
+
+#modification du xtrain, ajout de 2 colonne, les emoticones.
+train_emot=np.transpose(np.vstack((x_train_exist_emot,x_train_sent_emot)))
+test_emot=np.transpose(np.vstack((x_test_exist_emot,x_test_sent_emot)))
+
+x_train_keras=np.hstack((X_train_counts,train_emot))
+x_test_keras=np.hstack((X_test_counts,test_emot))
+
 for i,opt in enumerate(optimizerlist):
 
     from tweet_analysis.Tools.KerasNN import NN2
-    model=NN2(np.shape(x_train_keras)[1],opt,'tanh',np.shape(x_train_keras)[1]//2)  # nn2,3 : et hidden layer, tanh ou relu.
+    model=NN2(np.shape(x_train_keras)[1],opt,'tanh',10)  # nn2,3 : et hidden layer, tanh ou relu.
     #Entrainement du reseau de neurones
 
     start = time.time()
-    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras))
+    logs = model.fit(x_train_keras, y_train_keras, nb_epoch=nepoche,validation_data=(x_test_keras, y_test_keras),callbacks=[early_stopping])
 
     end = time.time()
     duree=end-start
     print duree
 
-    #affichage et enregistrement des resultats
+    #enregistrement des resultats
 
-    file = open("Tweets_hid_10_vs_midinput.txt", "a")
+    file = open("Tweets_with_emot.txt", "a")
     print >> file, 'NN2'
     print >> file, opt
     print >> file, 'tanh'
-    print >> file, np.shape(x_train_keras)[1]//2
+    print >> file, '10'
     print >> file, 'train'
     print >> file, logs.history['acc'][-1]
     print >> file, 'valid'
@@ -164,8 +177,8 @@ for i,opt in enumerate(optimizerlist):
     print >> file, duree
     print >> file, ''
     file.close()
-'''
 
+'''
 # graphique classe correct et fonction objective
 plt.plot(logs.history['acc'], label='train')
 plt.plot(logs.history['val_acc'], label='valid')
@@ -176,4 +189,4 @@ plt.plot(logs.history['loss'], label='train')
 plt.plot(logs.history['val_loss'], label='valid')
 plt.title('Fonction objectif sur l\'ensemble d\'entrainement')
 plt.show()
-
+'''

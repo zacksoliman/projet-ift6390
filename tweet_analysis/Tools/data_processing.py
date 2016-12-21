@@ -23,6 +23,26 @@ donald_re = re.compile('|'.join(map(re.escape, DonaldWords)))
 
 classifier =[]
 
+# emoticon, retourne un array text.shape,2
+def emoticon(textdata):
+
+    # on part du principe que si il y a plusieurs emoticon ils iront tous dans le mm sens
+    # on ajoute 2 valeur a l input, 0 ou 1 qui precise l'existence d'un emot.
+    #                               0 ou 1 qui precise si l'emoticon est, respectivement positif ou negatif
+    x_emot=np.zeros((textdata.shape[0], 2))
+    emoticon=[':)',':-)',':p',':(',':/',';)',':>',':-(',':*',':<',':-*',':-x','<3']   #celui ci me bug ':'('
+    emoticon_val=[1,1,1,0,0,1,1,0,1,0,1,1,1] # 1 positif, 0 negatif
+    for i,row in enumerate(textdata):
+        for j,emot in enumerate(emoticon):
+            if row.find(emot) !=-1:
+                x_emot[i,0]=1
+                x_emot[i, 1] = emoticon_val[j]
+            else:
+                x_emot[i,0]=0
+                x_emot[i, 1] = 0
+    return x_emot
+
+
 def preprocess(tweet):
 
     if type(tweet)!=type(2.0):
@@ -59,19 +79,24 @@ def preprocess(tweet):
         tweet=''
     return tweet
 
+
 def clean_data(data):
 
     #text processing
     data['processed_text'] = data.text.apply(preprocess)
-    #remove duplicate tweets
+    emot=emoticon(data.text)
+    data['exist_emot'] = emot[:,0]
+    data['sent_emot']=emot[:,1]
+    # drop duplicates
     data = data.drop_duplicates(subset='processed_text', keep='last')
-
     return data
+
+
 
 def get_clean_data(dataset="Sentiment"):
 
     basepath = os.path.dirname(__file__)
     filepath = os.path.abspath(os.path.join(basepath, "..", "data", dataset + ".csv"))
-    data = pd.read_csv(filepath)
+    data = pd.read_csv(filepath, encoding = 'unicode_escape')
 
     return clean_data(data)
