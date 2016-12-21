@@ -50,6 +50,8 @@ x_train = x[train_inds]
 x_test = x[test_inds]
 y_train = y[train_inds]
 y_test = y[test_inds]
+
+# garder les bonnes lignes, EMOTICONES
 x_train_exist_emot=x_exist_emot[train_inds]
 x_test_exist_emot=x_exist_emot[test_inds]
 x_train_sent_emot=x_sent_emot[train_inds]
@@ -141,7 +143,7 @@ for i,opt in enumerate(optimizerlist):
     file.close()
 
 
-#modification du xtrain, ajout de 2 colonne, les emoticones.
+#modification du xtrain, ajout de 2 colonne, EMOTICONES.
 train_emot=np.transpose(np.vstack((x_train_exist_emot,x_train_sent_emot)))
 test_emot=np.transpose(np.vstack((x_test_exist_emot,x_test_sent_emot)))
 
