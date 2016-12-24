@@ -5,54 +5,47 @@ from keras.optimizers import SGD
 import numpy as np
 
 
-def NN1(shapeinput):
+
+
+#softmax, pas de couche cacher
+def NN1(shapeinput, optim):
     model = Sequential()
-    model.add(Dense(10, input_dim=shapeinput))
-    model.add(Activation('tanh'))
-    model.add(Dense(3))
-    model.add(Activation('softplus'))
-    sgd = SGD(0.1)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+    model.add(Dense(3, input_dim=shapeinput))
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer=optim, metrics=['accuracy'])
     return model
 
 
-def NN2(shapeinput):
+def NN2(shapeinput,optim,hiddenlayer,nbhid):
     model = Sequential()
-    # Dense(64) is a fully-connected layer with 64 hidden units.
-    # in the first layer, you must specify the expected input data shape:
-    # here, 20-dimensional vectors.
-    model.add(Dense(64, input_dim=shapeinput, init='uniform'))
-    model.add(Activation('tanh'))
+    model.add(Dense(nbhid, input_dim=shapeinput))
+    model.add(Activation(hiddenlayer))
+    model.add(Dense(3))
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer=optim, metrics=['accuracy'])
+    return model
+
+
+def NN3(shapeinput,optim,hiddenlayer):
+    model = Sequential()
+    model.add(Dense(10, input_dim=shapeinput, init='uniform'))
+    model.add(Activation(hiddenlayer))
     model.add(Dropout(0.5))
-    model.add(Dense(64, init='uniform'))
-    model.add(Activation('tanh'))
-    model.add(Dropout(0.5))
+    #model.add(Dense(64, init='uniform'))
+    #model.add(Activation(hiddenlayer))
+    #model.add(Dropout(0.5))
     model.add(Dense(3, init='uniform'))
     model.add(Activation('softmax'))
-
-    sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=sgd,
-                  metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=optim, metrics=['accuracy'])
 
     return model
 
-def NN3(shapeinput):
-    model = Sequential()
-    model.add(Dense(64, input_dim=shapeinput, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(3, activation='softmax'))
-
-    model.compile(loss='categorical_crossentropy',
-                  optimizer='adadelta',
-                  metrics=['accuracy'])
-    return model
 
 
 
-def NN4():
+
+
+def NN100():
 
     model = Sequential()
     # input: 100x100 images with 3 channels -> (3, 100, 100) tensors.
@@ -90,7 +83,7 @@ def NN4():
 
 
 
-def NN5(shapeinput):
+def NN200(shapeinput):
 
     data_dim = shapeinput
     timesteps = 8
